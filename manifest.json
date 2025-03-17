@@ -1,14 +1,14 @@
 {
-  "name": "my-chrome-extension",
-  "description": "Template for a chrome extension (manifest v3)",
-  "version": "1.0",
+  "name": "GeoGuessr History",
+  "description": "Better game history for geoguessr",
+  "version": "0.1.0",
   "manifest_version": 3,
   "permissions": ["storage", "tabs"],
   "icons": {
-    "16": "images/icon-16.png",
-    "32": "images/icon-32.png",
-    "48": "images/icon-48.png",
-    "128": "images/icon-128.png"
+    "16": "images/geoguessr_history_icon-16.png",
+    "32": "images/geoguessr_history_icon-32.png",
+    "48": "images/geoguessr_history_icon-48.png",
+    "128": "images/geoguessr_history_icon-128.png"
   },
   "background": {
     "service_worker": "src/background/background.js",
@@ -17,10 +17,10 @@
   "action": {
     "default_popup": "src/popup/popup.html",
     "default_icon": {
-      "16": "images/icon-16.png",
-      "32": "images/icon-32.png",
-      "48": "images/icon-48.png",
-      "128": "images/icon-128.png"
+      "16": "images/geoguessr_history_icon-16.png",
+      "32": "images/geoguessr_history_icon-32.png",
+      "48": "images/geoguessr_history_icon-48.png",
+      "128": "images/geoguessr_history_icon-128.png"
     }
   },
   "content_scripts": [
@@ -28,15 +28,21 @@
       "js": ["src/content/content.js"],
       "css": ["src/content/content.css"],
       "matches": [
-        "https://github.com/floholz/chrome-extension-v3-template"
+        "https://www.geoguessr.com/*"
+      ]
+    },
+    {
+      "js": ["src/content/history.js"],
+      "css": ["src/content/history.css"],
+      "matches": [
+        "https://www.geoguessr.com/me/activities"
       ]
     }
   ],
   "web_accessible_resources": [
     {
-      "resources": [ "assets/*" ],
-      // "extension_ids": [ "your-extension-id" ],
-      "matches": [ "*://*/*" ]
+      "matches": [ "*://*/*" ],
+      "resources": [ "assets/*", "src/utils.js" ]
     }
   ],
   "commands": {

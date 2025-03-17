@@ -105,10 +105,86 @@ export function addMessageListener(key, callback) {
     });
 }
 
-export function strRepeat(string, repeat) {
-    let result = string;
-    for (let i = 1; i < repeat; i++) {
-        result += string;
+export async function registerContentScript(script, injectImmediately = false) {
+    if (!script || (!script.js && !script.css) ) {
+        throw Error("No 'js' or 'css' was provided, at least one of these must be set.");
     }
-    return result;
+    const scriptDetails = Object.assign({
+        id: crypto.randomUUID(),
+        matches: ['*'],
+        persistAcrossSessions: true,
+        runAt: "document_idle",
+    }, script);
+
+    return await chrome.scripting.registerContentScripts([scriptDetails])
+        .then(async () => {
+            console.log(`Registered content script ${script.id}`);
+            if (injectImmediately) {
+                await injectStyle({ files: script.css ?? [] })
+                await executeScript({ files: script.js??[] })
+            }
+            return scriptDetails.id
+        })
+        .catch((err) => {
+            console.warn("Could not register script!", err)
+            throw err
+        });
+}
+
+export async function unregisterContentScript(id) {
+    chrome.scripting.unregisterContentScripts({ids: [id]})
+        .then(() => console.log(`Unregistered script ${id}`))
+        .catch((err) => {
+            console.warn(`Could not unregister script ${id}`, err)
+            throw err
+        });
+}
+
+export async function injectStyle(style) {
+    if (!style || !style.files) {
+        throw Error("No 'files' provided.");
+    }
+    const tab = await getCurrentTab()
+    const styleDetails = Object.assign({
+        target: { tabId: tab.id },
+    }, style)
+    await chrome.scripting.insertCSS(styleDetails)
+}
+
+export async function executeScript(script) {
+    if (!script || (!script.files && !script.func) ) {
+        throw Error("No 'files' or 'func' was provided, at least one of these must be set.");
+    }
+    const tab = await getCurrentTab()
+    const scriptDetails = Object.assign({
+        target: { allFrames: true, tabId: tab.id },
+        injectImmediately: true,
+    }, script)
+    await chrome.scripting.executeScript(scriptDetails);
+}
+
+export async function getCurrentTab() {
+    let queryOptions = { active: true, lastFocusedWindow: true };
+    // `tab` will either be a `tabs.Tab` instance or `undefined`.
+    let [tab] = await chrome.tabs.query(queryOptions);
+    return tab;
+}
+
+export async function delay(ms) {
+    return new Promise(res => setTimeout(res, ms));
+}
+
+export function injectFlag() {
+    const injectedFlag = document.createElement("div")
+    injectedFlag.id = "injected_flag"
+    injectedFlag.style.background = 'red'
+    injectedFlag.style.position = 'fixed'
+    injectedFlag.style.top = '10px'
+    injectedFlag.style.left = '10px'
+    injectedFlag.style.width = '20px'
+    injectedFlag.style.height = '20px'
+    injectedFlag.style.borderRadius = '50%'
+    injectedFlag.style.zIndex = '9999999999999'
+    document.body.append(injectedFlag)
+    return injectedFlag
 }

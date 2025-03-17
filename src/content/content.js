@@ -1,12 +1,48 @@
-const sparklesRes = chrome.runtime.getURL('assets/sparkles.gif');
-const ghStarContainer = document.querySelector('#repository-details-container>ul>* .starred').parentElement;
+injectHeaderContent()
 
-const starContainer = document.createElement('div');
-starContainer.id = 'my_ext-star_container';
+function waitForQuerySelector(selector, callback) {
+    const iv = setInterval(() => {
+        const elem = document.querySelector('header div[class^=header-desktop_desktopSectionRight]')
+        if (elem) {
+            clearInterval(iv)
+            callback(elem)
+        }
+    }, 200)
+}
 
-const sparkleContainer = document.createElement('div');
-sparkleContainer.id = 'my_ext-sparkle_container';
-sparkleContainer.style.backgroundImage = `url("${sparklesRes}")`;
+function injectHeaderContent() {
+    waitForQuerySelector('header div[class^=header-desktop_desktopSectionRight]', (header) => {
+        header.prepend(historyBtnContainer)
+    })
 
-ghStarContainer.parentElement.insertBefore(starContainer, ghStarContainer.nextElementSibling);
-starContainer.append(sparkleContainer, ghStarContainer);
+    const historyBtnContainer = document.createElement('div');
+    historyBtnContainer.id = 'ggh_historyBtnContainer'
+
+    const historyBtn = document.createElement('a');
+    historyBtn.id = 'ggh_historyBtn'
+    historyBtn.href = 'https://www.geoguessr.com/me/activities'
+
+    const historyRes = chrome.runtime.getURL('assets/history.svg');
+    const historyIcon = document.createElement('img');
+    historyIcon.id = 'ggh_historyIcon'
+    historyIcon.src = historyRes
+    historyIcon.alt = 'history-icon'
+
+    historyBtn.appendChild(historyIcon)
+    historyBtnContainer.append(historyBtn)
+}
+
+async function loadHistory() {
+    // document.querySelectorAll('a[href*=duels]')
+
+    fetch('https://www.geoguessr.com/me/activities')
+        .then(response => response.text())
+        .then(text => {
+            const parser = new DOMParser();
+            const htmlDocument = parser.parseFromString(text, "text/html");
+
+            const links = htmlDocument.querySelectorAll('a[href*=duels]')
+            const urls = links.map(a => a.href)
+            console.log(urls)
+        })
+}

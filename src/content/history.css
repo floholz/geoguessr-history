@@ -1,0 +1,108 @@
+﻿:root {
+    --ggh_header_size: 4rem;
+    --ggh_activityContainerPadding: 2rem;
+    --ggh_accentColor: #FECD19;
+}
+
+@keyframes move_bg {
+    0%{background-position-x: 100%}
+    100%{background-position-x: 0%}
+}
+
+.hidden {
+    display: none !important;
+}
+
+.pending_content {
+    background-size: 240% !important;
+    background-image:
+            linear-gradient(90deg, rgba(11, 29, 53, 0.2) 0%, rgba(39, 39, 39, 0.2) 25%, rgba(11, 29, 53, 0.2) 50%, rgba(39, 39, 39, 0.2) 75%, rgba(11, 29, 53, 0.2) 100%),
+            linear-gradient(135deg, transparent 45%, rgba(255, 255, 255, 0.1) 50%, transparent 55%) !important;
+    animation: move_bg 2s infinite;
+}
+
+input[type="checkbox"] {
+    accent-color: var(--ggh_accentColor);
+}
+
+#ggh_activityToggleContainer {
+    position: fixed;
+    top: calc(var(--ggh_header_size) + 0.5rem);
+    right: 5rem;
+    background: rgba(0,0,0,.6);
+    border-radius: 0.5rem;
+    padding: 0.5rem 0.8rem;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+}
+
+#ggh_gameHistoryContainer {
+    align-items: center;
+    display: flex;
+    flex-direction: column;
+    padding-bottom: 2rem;
+    padding-top: var(--ggh_activityContainerPadding);
+    min-height: calc(100vh - var(--ggh_activityContainerPadding) - var(--ggh_header_size));
+}
+
+#ggh_gameHistoryHeader {
+    font-style: italic;
+    font-size: 1.5rem;
+}
+
+#ggh_gameHistoryTable {
+    align-items: center;
+    display: flex;
+    flex-direction: column;
+    margin-top: 2rem;
+    width: 80%;
+}
+
+.game_table_item {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr 1fr 1fr;
+    justify-items: center;
+    align-content: center;
+    padding: 1rem;
+    background: rgb(0 0 0 / 40%);
+    border: 2px solid rgba(0,0,0,.6);
+    border-bottom-width: 0;
+    width: 100%;
+}
+
+.game_table_header {
+    font-size: 1rem;
+    font-weight: bold;
+}
+
+.game_summary_container {
+    min-height: 2rem;
+}
+
+.game_table_item:first-child {
+    border-top-left-radius: 0.5rem;
+    border-top-right-radius: 0.5rem;
+}
+
+.game_table_item:last-child {
+    border-bottom-width: 2px;
+    border-bottom-left-radius: 0.5rem;
+    border-bottom-right-radius: 0.5rem;
+}
+
+.game_mode {
+    color: #cda934;
+}
+
+.game_result_win {
+    color: #00ff00;
+    text-shadow: 0 0 10px rgb(150, 255, 113);
+}
+
+.game_result_lose {
+    color: #ff0000;
+    text-shadow: 0 0 10px rgb(255, 118, 118);
+}
