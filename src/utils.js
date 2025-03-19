@@ -31,6 +31,100 @@ export function writeStorage(key, data, area = 'local') {
     chrome.storage[area].set({[key]: data});
 }
 
+const defaultStorageIntervalTime = 500;
+export async function readStorageAsync(key, area = 'local', timeout = 30000) {
+    if (!(area === 'local' || area === 'sync' || area === 'session' || area === 'managed')) {
+        console.error("Invalid storage area! Possible values are: 'local', 'sync', 'session' and 'managed'.")
+        return null;
+    }
+    //const waitTimeout = setTimeout(() => {
+    //    throw new Error(`Storage lock timeout exceeded for area '${area}'`);
+    //}, timeout)
+
+    if (timeout <= 0) {
+        throw new Error(`Storage lock timeout exceeded for area '${area}'`);
+    }
+
+    if (storageLock[area]) {
+        return new Promise((resolve) => setTimeout(() => {
+            resolve(readStorageAsync(key, area, timeout - defaultStorageIntervalTime));
+        }, defaultStorageIntervalTime));
+    }
+    //clearInterval(waitTimeout);
+
+    lockStorage(area);
+    const data = await chrome.storage[area].get([key]);
+    unlockStorage(area);
+    return data[key];
+}
+
+export async function writeStorageAsync(key, data, area = 'local', timeout = 30000) {
+    if (!(area === 'local' || area === 'sync' || area === 'session' || area === 'managed')) {
+        console.error("Invalid storage area! Possible values are: 'local', 'sync', 'session' and 'managed'.")
+        return;
+    }
+    //const waitTimeout = setTimeout(() => {
+    //    throw new Error(`Storage lock timeout exceeded for area '${area}'`);
+    //}, timeout)
+    //while (storageLock[area]);
+    //clearInterval(waitTimeout);
+
+    if (timeout <= 0) {
+        throw new Error(`Storage lock timeout exceeded for area '${area}'`);
+    }
+
+    if (storageLock[area]) {
+        return new Promise((resolve) => setTimeout(() => {
+            resolve(writeStorageAsync(key, data, area, timeout - defaultStorageIntervalTime));
+        }, defaultStorageIntervalTime));
+    }
+
+    lockStorage(area);
+    await chrome.storage[area].set({[key]: data});
+    unlockStorage(area);
+}
+
+
+let storageLock = {
+    local: false,
+    sync: false,
+    session: false,
+}
+let storageLockTimeout= {
+    local: null,
+    sync: null,
+    session: null,
+}
+
+export function lockStorage(area = 'local', timeout = 50000) {
+    if (!(area === 'local' || area === 'sync' || area === 'session' || area === 'managed')) {
+        console.error("Invalid storage area! Possible values are: 'local', 'sync', 'session' and 'managed'.")
+        return;
+    }
+
+    storageLock[area] = true;
+    console.log(`lock storage area: ${area}`);
+
+    storageLockTimeout[area] = setTimeout(() => {
+        storageLock[area] = false;
+        console.warn(`Storage lock timeout exceeded for area '${area}'`);
+    }, timeout)
+}
+
+export function unlockStorage(area = 'local') {
+    if (!(area === 'local' || area === 'sync' || area === 'session' || area === 'managed')) {
+        console.error("Invalid storage area! Possible values are: 'local', 'sync', 'session' and 'managed'.")
+        return;
+    }
+
+    storageLock[area] = false;
+    console.log(`unlock storage area: ${area}`);
+
+    if (storageLockTimeout[area]) {
+        clearTimeout(storageLockTimeout[area]);
+    }
+}
+
 /**
  * Callback function for {@link addStorageChangeListener}.
  *

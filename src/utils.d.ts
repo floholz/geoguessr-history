@@ -5,6 +5,10 @@
 
     export function writeStorage<T>(key: string, data: T, area?: StorageArea): void;
 
+    export function readStorageAsync<T>(key: string, area?: StorageArea, timeout?: number): Promise<T | null>;
+
+    export function writeStorageAsync<T>(key: string, data: T, area?: StorageArea, timeout?: number): Promise<void>;
+
     export type StorageChangeListenerCallback = (
         oldValue: any,
         newValue: any,

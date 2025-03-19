@@ -6,7 +6,7 @@
 
     /* storage constants */
     const GGH_ACTIVITY_TOGGLE_STATE = "GGH_ACTIVITY_TOGGLE_STATE";
-    const GGH_GAME_CACHE = "GGH_GAME_CACHE_";
+    const GGH_GAME_CACHE_LIST = "GGH_GAME_CACHE_LIST";
 
     /* inject content */
     const contentContainer = document.querySelector('div[class*=container_content__]');
@@ -43,10 +43,9 @@
     gameHistoryContainer.append(gameHistoryHeader);
     gameHistoryContainer.append(gameHistoryTable);
 
-    await utils.readStorage(GGH_ACTIVITY_TOGGLE_STATE, 'sync').then((state) => {
-        toggleCheckbox.checked = state;
-        toggleActivityContent(state);
-    })
+    /***************************************************************************************************************/
+
+    /* main */
 
     const gameUrls = await parseGameUrls();
     addTableHeader();
@@ -54,10 +53,17 @@
         void addGameSummaryElem(fetchGameSummary(url))
     }
 
+    await utils.readStorage(GGH_ACTIVITY_TOGGLE_STATE, 'sync').then((state) => {
+        toggleCheckbox.checked = state;
+        toggleActivityContent(state);
+    })
 
 
 
 
+    /***************************************************************************************************************/
+
+    /* functions */
 
     function toggleActivityContent(checked) {
         if (checked) {
@@ -74,7 +80,7 @@
         const urls = [];
         const links = activityContainer.querySelectorAll('a[href*=duels]')
         for (const link of links) {
-            if (link.href){
+            if (link.href && link.parentElement.innerText.startsWith('You')) {
                 urls.push(link.href);
             }
         }
@@ -97,9 +103,17 @@
         const gameId = parsedUrl.pathname.split('/')[2];
 
         // check cache
-        const cachedSummary = await utils.readStorage(GGH_GAME_CACHE + gameId);
-        if (cachedSummary) {
-            return cachedSummary;
+        // const cachedSummary = await utils.readStorage(GGH_GAME_CACHE + gameId);
+        // if (cachedSummary) {
+        //     return cachedSummary;
+        // }
+
+        {   // eager return
+            const cacheList = await utils.readStorage(GGH_GAME_CACHE_LIST) ?? [];
+            const cachedSummary = cacheList.find(summary => summary.gameId === gameId)
+            if (cachedSummary) {
+                return cachedSummary;
+            }
         }
 
         // load from url
@@ -173,8 +187,12 @@
         gameSummary.win = gameSummary.rounds[gameSummary.rounds.length - 1].vsHealth === '0';
 
         // save to cache
-        utils.writeStorage(GGH_GAME_CACHE + gameId, gameSummary)
-        utils.writeStorage(GGH_GAME_CACHE + 'available', true)
+        const asyncCacheList = await utils.readStorageAsync(GGH_GAME_CACHE_LIST)??[];
+        const asyncCachedSummary = asyncCacheList.find(summary => summary.gameId === gameId)
+        if (!asyncCachedSummary) {
+            asyncCacheList.push(gameSummary);
+            await utils.writeStorageAsync(GGH_GAME_CACHE_LIST, asyncCacheList)
+        }
 
         return gameSummary;
     }
