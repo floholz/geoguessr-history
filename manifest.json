@@ -1,9 +1,9 @@
 {
   "name": "GeoGuessr History",
   "description": "Better game history for geoguessr",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "manifest_version": 3,
-  "permissions": ["storage", "tabs"],
+  "permissions": ["storage"],
   "icons": {
     "16": "images/geoguessr_history_icon-16.png",
     "32": "images/geoguessr_history_icon-32.png",
@@ -44,14 +44,5 @@
       "matches": [ "*://*/*" ],
       "resources": [ "assets/*", "src/utils.js" ]
     }
-  ],
-  "commands": {
-      "_execute_action": {
-        "suggested_key": {
-          "default": "Alt+Q",
-          "mac": "Alt+Q"
-        },
-        "description": "Opens popup.html"
-      }
-    }
+  ]
   }
