@@ -9,8 +9,15 @@
     const GGH_GAME_CACHE_LIST = "GGH_GAME_CACHE_LIST";
 
     /* inject content */
-    const contentContainer = document.querySelector('div[class*=container_content__]');
-    const activityContainer = document.querySelector('div[class*=activities_container__]');
+    const contentContainer = await utils.querySelector('div[class*=container_content__]');
+    if (!contentContainer) {
+        throw Error('No content container found');
+    }
+
+    const activityContainer = await utils.querySelector('div[class*=activities_container__]');
+    if (!activityContainer) {
+        throw Error('No activity container found');
+    }
 
     const toggleContainer = document.createElement('div');
     toggleContainer.id = 'ggh_activityToggleContainer';
@@ -103,11 +110,6 @@
         const gameId = parsedUrl.pathname.split('/')[2];
 
         // check cache
-        // const cachedSummary = await utils.readStorage(GGH_GAME_CACHE + gameId);
-        // if (cachedSummary) {
-        //     return cachedSummary;
-        // }
-
         {   // eager return
             const cacheList = await utils.readStorage(GGH_GAME_CACHE_LIST) ?? [];
             const cachedSummary = cacheList.find(summary => summary.gameId === gameId)
@@ -122,28 +124,6 @@
         const parser = new DOMParser();
         const htmlDocument = parser.parseFromString(text, "text/html");
 
-        // Round
-        // game-summary_text__viPc6 // Round 1
-        // game-summary_specialRoundDamage__8uY4d // x2.5
-        //
-        // Your score
-        // game-summary_text__viPc6 // 1295 points
-        // td>> game-summary_bestGuessValue__8mw01 // a[href="/user/679c06cff207188aa14b0899"]
-        // game-summary_smallText___cwyY // 2,504 KM
-        //
-        // Bayesian Score
-        // game-summary_text__viPc6 // 1235 points
-        // td>> game-summary_bestGuessValue__8mw01 // a[href="/user/679c06cff207188aa14b0899"]
-        // game-summary_smallText___cwyY // 2,591 KM
-        //
-        // Your health
-        // game-summary_text__viPc6 // 6000
-        // game-summary_smallText___cwyY // 0
-        //
-        // Bayesian Health
-        // game-summary_text__viPc6 // 5940
-        // game-summary_damage__UdjNl // -60
-
         const summary_playedRounds = htmlDocument.querySelector('div[class*=game-summary_playedRounds__]');
         const gameSummary = {
             gameUrl: url,
@@ -154,37 +134,35 @@
         gameSummary.gameMode = htmlDocument.querySelector('div[class*=game-mode-brand_selected__]')
             ?.innerText
             ?.replace('&nbsp', '');
+        gameSummary.gameTypeText = htmlDocument.querySelector('div[class*=game-mode-brand_subTitle__]')
+            ?.innerText
+            ?.trim();
         for (const row of summary_playedRounds.children) {
-            const myDistanceText = row.children[1].querySelector('div[class*=game-summary_smallText__]').innerText
-            const vsDistanceText = row.children[2].querySelector('div[class*=game-summary_smallText__]').innerText
-
-            const roundSummary = {
-                round: row.children[0].querySelector('div[class*=game-summary_text__]').innerText,
-                multiplier: row.children[0].querySelector('p[class*=game-summary_specialRoundDamage__]')?.innerText,
-
-                myScore: row.children[1].querySelector('div[class*=game-summary_text__]')?.innerText,
-                myGuesserLink: row.children[1].querySelector('span[class*=game-summary_bestGuessValue__] a[href]')?.href,
-                myGuesserName: row.children[1].querySelector('div[class*=user-nick_nick__]')?.innerText?.trim(),
-                myDistance: myDistanceText,
-                myDistanceValue: Number(myDistanceText.split(' ')[0].replace(',', '')),
-                myDistanceUnit: myDistanceText.split(' ')[1],
-
-                vsScore: row.children[2].querySelector('div[class*=game-summary_text__]')?.innerText,
-                vsGuesserLink: row.children[2].querySelector('span[class*=game-summary_bestGuessValue__] a[href]')?.href,
-                vsGuesserName: row.children[2].querySelector('div[class*=user-nick_nick__]')?.innerText?.trim(),
-                vsDistance: vsDistanceText,
-                vsDistanceValue: Number(vsDistanceText.split(' ')[0].replace(',', '')),
-                vsDistanceUnit: vsDistanceText.split(' ')[1],
-
-                myHealth: row.children[3].querySelector('div[class*=game-summary_text__]').innerText,
-                myDamage: row.children[3].querySelector('[class*=game-summary_damage__],[class*=game-summary_smallText__]').innerText,
-
-                vsHealth: row.children[4].querySelector('div[class*=game-summary_text__]').innerText,
-                vsDamage: row.children[4].querySelector('[class*=game-summary_damage__],[class*=game-summary_smallText__]').innerText,
-            }
+            const roundSummary = {}
+            roundSummary.round = Number(row.children[0].querySelector('div[class*=game-summary_text__]').innerText?.split(' ')[1]);
+            roundSummary.multiplier = row.children[0].querySelector('p[class*=game-summary_specialRoundDamage__]')?.innerText;
+            roundSummary.myScore = row.children[1].querySelector('div[class*=game-summary_text__]')?.innerText;
+            roundSummary.myGuesserLink = row.children[1].querySelector('span[class*=game-summary_bestGuessValue__] a[href]')?.href;
+            roundSummary.myGuesserName = row.children[1].querySelector('div[class*=user-nick_nick__]')?.innerText?.trim();
+            roundSummary.myDistance = row.children[1].querySelector('div[class*=game-summary_smallText__]').innerText;
+            roundSummary.myDistanceValue = Number(roundSummary.myDistance.split(' ')[0].replace(',', ''));
+            roundSummary.myDistanceUnit = roundSummary.myDistance.split(' ')[1];
+            roundSummary.vsScore = row.children[2].querySelector('div[class*=game-summary_text__]')?.innerText;
+            roundSummary.vsGuesserLink = row.children[2].querySelector('span[class*=game-summary_bestGuessValue__] a[href]')?.href;
+            roundSummary.vsGuesserName = row.children[2].querySelector('div[class*=user-nick_nick__]')?.innerText?.trim();
+            roundSummary.vsDistance = row.children[2].querySelector('div[class*=game-summary_smallText__]').innerText;
+            roundSummary.vsDistanceValue = Number(roundSummary.vsDistance.split(' ')[0].replace(',', ''));
+            roundSummary.vsDistanceUnit = roundSummary.vsDistance.split(' ')[1];
+            roundSummary.myHealth = row.children[3].querySelector('div[class*=game-summary_text__]').innerText;
+            roundSummary.myDamage = row.children[3].querySelector('[class*=game-summary_damage__],[class*=game-summary_smallText__]').innerText;
+            roundSummary.myDamageValue = Number(roundSummary.myDamage);
+            roundSummary.vsHealth = row.children[4].querySelector('div[class*=game-summary_text__]').innerText;
+            roundSummary.vsDamage = row.children[4].querySelector('[class*=game-summary_damage__],[class*=game-summary_smallText__]').innerText;
+            roundSummary.vsDamageValue = Number(roundSummary.vsDamage);
             gameSummary.rounds.push(roundSummary);
         }
         gameSummary.win = gameSummary.rounds[gameSummary.rounds.length - 1].vsHealth === '0';
+        gameSummary.roundsWon = gameSummary.rounds.reduce((acc, cur) => acc + (cur.myDamageValue > cur.vsDamageValue ? 1 : 0), 0);
 
         // save to cache
         const asyncCacheList = await utils.readStorageAsync(GGH_GAME_CACHE_LIST)??[];
@@ -200,7 +178,7 @@
     function addTableHeader() {
         const tableHeader = document.createElement('div');
         tableHeader.classList.add('game_table_header', 'game_table_item');
-        const headerItems = ['Result', 'Mode', 'Rounds', 'Avg. Distance', 'Health (me / vs)'];
+        const headerItems = ['Result', 'Type', 'Mode', 'Rounds', 'Avg. Distance', 'Health'];
         headerItems.forEach((headerItem) => {
             const elem = document.createElement("span");
             elem.innerText = headerItem;
@@ -237,13 +215,17 @@
             winElem.innerText = 'Lose'
         }
 
+        const gameType = document.createElement('span');
+        gameType.classList.add('game_mode');
+        gameType.innerText = summary.gameTypeText;
+
         const modeElem = document.createElement('span');
         modeElem.classList.add('game_mode');
         modeElem.innerText = summary.gameMode;
 
         const roundElem = document.createElement('span');
         roundElem.classList.add('game_round');
-        roundElem.innerText = lastRound.round;
+        roundElem.innerText = `${lastRound.round} (${summary.roundsWon})`;
 
         const distElem = document.createElement('span');
         distElem.classList.add('game_damage');
@@ -252,9 +234,10 @@
 
         const healthElem = document.createElement('span');
         healthElem.classList.add('game_health');
-        healthElem.innerText = `${lastRound.myHealth} / ${lastRound.vsHealth}`;
+        healthElem.innerText = `${lastRound.myHealth > lastRound.vsHealth ? lastRound.myHealth : lastRound.vsHealth} HP`;
 
         gameContainer.appendChild(winElem);
+        gameContainer.appendChild(gameType);
         gameContainer.appendChild(modeElem);
         gameContainer.appendChild(roundElem);
         gameContainer.appendChild(distElem);

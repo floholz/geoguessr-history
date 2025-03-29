@@ -60,6 +60,7 @@
     }
 
     export function getCurrentTab(): Promise<Tab | undefined>;
+    export function querySelector(selector, root, timeout): Promise<HTMLElement | null>;
     export function delay(): Promise<void>;
 
     export function injectFlag(): HTMLDivElement;

@@ -58,12 +58,12 @@ input[type="checkbox"] {
     display: flex;
     flex-direction: column;
     margin-top: 2rem;
-    width: 80%;
+    width: 100%;
 }
 
 .game_table_item {
     display: grid;
-    grid-template-columns: 1fr 1fr 1fr 1fr 1fr;
+    grid-template-columns: repeat(6, 1fr);
     justify-items: center;
     align-content: center;
     padding: 1rem;
@@ -95,6 +95,7 @@ input[type="checkbox"] {
 
 .game_mode {
     color: #cda934;
+    text-transform: capitalize;
 }
 
 .game_result_win {

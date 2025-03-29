@@ -264,6 +264,24 @@ export async function getCurrentTab() {
     return tab;
 }
 
+export async function querySelector(selector, root = document, timeout = 10000) {
+    return new Promise((resolve) => {
+        let element;
+        const waitInterval = setInterval(() => {
+            element = root.querySelector(selector);
+            if (element) {
+                clearInterval(waitInterval);
+                resolve(element);
+            }
+        }, 100);
+        let waitTimeout = setTimeout(() => {
+            clearInterval(waitInterval);
+            clearTimeout(waitTimeout);
+            resolve(null);
+        }, timeout);
+    });
+}
+
 export async function delay(ms) {
     return new Promise(res => setTimeout(res, ms));
 }
